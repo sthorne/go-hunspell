@@ -118,3 +118,21 @@ func (handle *Hunhandle) Spell(word string) bool {
     }
     return true
 }
+
+// Morphological generation by example
+func (handle *Hunhandle) Generate(word string, example string) []string {
+	wordcs := C.CString(word)
+	examplecs := C.CString(example)
+	defer C.free(unsafe.Pointer(wordcs))
+	defer C.free(unsafe.Pointer(examplecs))
+	var carray **C.char
+	var length C.int
+	handle.lock.Lock()
+	length = C.Hunspell_generate(handle.handle, &carray, wordcs, examplecs)
+	handle.lock.Unlock()
+
+	words := CArrayToString(carray, int(length))
+
+	C.Hunspell_free_list(handle.handle, &carray, length)
+	return words
+}
